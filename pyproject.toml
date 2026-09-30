@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-usage-tracker"
+version = "0.1.0"
+description = "Track LLM token usage and cost across providers with a tiny, dependency-free library and CLI."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Manoj Kumar Kagitha" }]
+
+[project.scripts]
+llm-usage = "llm_usage_tracker.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
