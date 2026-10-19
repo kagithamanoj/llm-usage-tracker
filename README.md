@@ -26,7 +26,13 @@ print(tracker.summary())
 ```bash
 llm-usage report usage.jsonl
 llm-usage report usage.jsonl --format json
+llm-usage budget usage.jsonl --max 10.00
+llm-usage budget usage.jsonl --max 10.00 --warn-pct 75 --format json
 ```
+
+`budget` compares cumulative cost against a threshold: it warns once the
+warn band is reached (default 80%) and exits 1 when the budget is exceeded,
+so it works as a CI or cron guardrail for spending.
 
 ## Pricing
 

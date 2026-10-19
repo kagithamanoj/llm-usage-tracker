@@ -1,0 +1,20 @@
+[
+  "tests/test_budget.py::test_budget_cli_exceeded",
+  "tests/test_budget.py::test_budget_cli_json_format",
+  "tests/test_budget.py::test_budget_cli_rejects_bad_max",
+  "tests/test_budget.py::test_budget_cli_warning_band",
+  "tests/test_budget.py::test_budget_cli_within_budget",
+  "tests/test_budget.py::test_budget_status_custom_warn_pct",
+  "tests/test_budget.py::test_budget_status_exceeded_at_max",
+  "tests/test_budget.py::test_budget_status_ok",
+  "tests/test_budget.py::test_budget_status_rejects_bad_budget",
+  "tests/test_budget.py::test_budget_status_rejects_bad_warn_pct",
+  "tests/test_budget.py::test_budget_status_warning_at_band",
+  "tests/test_budget.py::test_budget_status_warning_just_under_max",
+  "tests/test_tracker.py::test_event_cost_known_model",
+  "tests/test_tracker.py::test_event_cost_unknown_model_falls_back",
+  "tests/test_tracker.py::test_jsonl_round_trip",
+  "tests/test_tracker.py::test_record_rejects_negative_tokens",
+  "tests/test_tracker.py::test_summary_aggregates_by_model",
+  "tests/test_tracker.py::test_total_tokens"
+]

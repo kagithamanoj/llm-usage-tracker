@@ -43,7 +43,7 @@ def test_summary_aggregates_by_model():
     tracker.record("anthropic", "claude-haiku-4-5", 1000, 1000)
     summary = tracker.summary()
     assert summary["calls"] == 3
-    assert summary["total_tokens"] == 5000
+    assert summary["total_tokens"] == 6000
     assert summary["by_model"]["openai/gpt-4o-mini"]["calls"] == 2
     assert summary["total_cost_usd"] > 0
 

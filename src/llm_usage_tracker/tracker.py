@@ -126,3 +126,31 @@ def load_events(log_path: str) -> list[dict]:
             if line:
                 events.append(json.loads(line))
     return events
+
+
+def budget_status(
+    total_cost_usd: float, max_usd: float, warn_pct: float = 80.0
+) -> dict:
+    """Compare cumulative cost against a budget threshold.
+
+    Status is "ok" under the warning band, "warning" once warn_pct of the
+    budget is used, and "exceeded" at or past max_usd.
+    """
+    if max_usd <= 0:
+        raise ValueError("budget must be greater than zero")
+    if not 0 <= warn_pct <= 100:
+        raise ValueError("warn_pct must be between 0 and 100")
+    pct = total_cost_usd / max_usd * 100
+    if pct >= 100:
+        status = "exceeded"
+    elif pct >= warn_pct:
+        status = "warning"
+    else:
+        status = "ok"
+    return {
+        "total_cost_usd": round(total_cost_usd, 6),
+        "max_usd": max_usd,
+        "pct_used": round(pct, 1),
+        "warn_pct": warn_pct,
+        "status": status,
+    }
