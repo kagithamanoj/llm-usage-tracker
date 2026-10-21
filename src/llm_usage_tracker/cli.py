@@ -9,16 +9,23 @@ import sys
 from .tracker import UsageTracker, budget_status, load_events
 
 
-def cmd_report(args: argparse.Namespace) -> int:
+def _tracker_from_log(log_path: str) -> UsageTracker:
+    """Load a JSONL log into a tracker, preserving original timestamps."""
     tracker = UsageTracker()
-    for row in load_events(args.log):
+    for row in load_events(log_path):
         tracker.record(
             row["provider"],
             row["model"],
             row["prompt_tokens"],
             row["completion_tokens"],
             label=row.get("label", ""),
+            timestamp=row.get("timestamp"),
         )
+    return tracker
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    tracker = _tracker_from_log(args.log)
     summary = tracker.summary()
     if args.format == "json":
         print(json.dumps(summary, indent=2))
@@ -33,19 +40,19 @@ def cmd_report(args: argparse.Namespace) -> int:
             f"{model:<32}{bucket['calls']:>8}{bucket['tokens']:>12}"
             f"{bucket['cost_usd']:>12.4f}"
         )
+    print()
+    print("Cost by day (UTC):")
+    print(f"{'Day':<16}{'Calls':>8}{'Tokens':>12}{'Cost USD':>12}")
+    for day, bucket in sorted(summary["by_day"].items()):
+        print(
+            f"{day:<16}{bucket['calls']:>8}{bucket['tokens']:>12}"
+            f"{bucket['cost_usd']:>12.4f}"
+        )
     return 0
 
 
 def cmd_budget(args: argparse.Namespace) -> int:
-    tracker = UsageTracker()
-    for row in load_events(args.log):
-        tracker.record(
-            row["provider"],
-            row["model"],
-            row["prompt_tokens"],
-            row["completion_tokens"],
-            label=row.get("label", ""),
-        )
+    tracker = _tracker_from_log(args.log)
     total_cost = tracker.summary()["total_cost_usd"]
     try:
         status = budget_status(total_cost, args.max, warn_pct=args.warn_pct)

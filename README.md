@@ -34,6 +34,10 @@ llm-usage budget usage.jsonl --max 10.00 --warn-pct 75 --format json
 warn band is reached (default 80%) and exits 1 when the budget is exceeded,
 so it works as a CI or cron guardrail for spending.
 
+`report` also prints a "Cost by day (UTC)" table that groups calls, tokens,
+and cost by the UTC date of each event, so you can see daily spend. The same
+breakdown is available in the JSON output under the `by_day` key.
+
 ## Pricing
 
 Built-in per-1K-token prices (USD) cover common OpenAI, Anthropic, and

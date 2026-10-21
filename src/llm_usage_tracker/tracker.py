@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 PRICING_PER_1K_USD = {
     "openai": {
@@ -82,6 +83,7 @@ class UsageTracker:
         prompt_tokens: int,
         completion_tokens: int,
         label: str = "",
+        timestamp: float | None = None,
     ) -> UsageEvent:
         if prompt_tokens < 0 or completion_tokens < 0:
             raise ValueError("token counts cannot be negative")
@@ -91,6 +93,7 @@ class UsageTracker:
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             label=label,
+            timestamp=timestamp if timestamp is not None else time.time(),
         )
         self.events.append(event)
         if self.log_path:
@@ -99,9 +102,11 @@ class UsageTracker:
         return event
 
     def summary(self) -> dict:
+        """Aggregate totals plus per-model and per-day (UTC) breakdowns."""
         total_tokens = sum(e.total_tokens for e in self.events)
         total_cost = sum(e.cost_usd() for e in self.events)
         by_model: dict[str, dict] = {}
+        by_day: dict[str, dict] = {}
         for e in self.events:
             key = f"{e.provider}/{e.model}"
             bucket = by_model.setdefault(
@@ -110,11 +115,23 @@ class UsageTracker:
             bucket["calls"] += 1
             bucket["tokens"] += e.total_tokens
             bucket["cost_usd"] = round(bucket["cost_usd"] + e.cost_usd(), 6)
+            day = (
+                datetime.fromtimestamp(e.timestamp, tz=timezone.utc)
+                .date()
+                .isoformat()
+            )
+            day_bucket = by_day.setdefault(
+                day, {"calls": 0, "tokens": 0, "cost_usd": 0.0}
+            )
+            day_bucket["calls"] += 1
+            day_bucket["tokens"] += e.total_tokens
+            day_bucket["cost_usd"] = round(day_bucket["cost_usd"] + e.cost_usd(), 6)
         return {
             "calls": len(self.events),
             "total_tokens": total_tokens,
             "total_cost_usd": round(total_cost, 6),
             "by_model": by_model,
+            "by_day": by_day,
         }
 
 
