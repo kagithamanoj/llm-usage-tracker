@@ -40,8 +40,9 @@ breakdown is available in the JSON output under the `by_day` key.
 
 ## Pricing
 
-Built-in per-1K-token prices (USD) cover common OpenAI, Anthropic, and
-Google models and were last reviewed 2026-09-30. Unknown models fall back
+Built-in per-1K-token prices (USD) cover common OpenAI, Anthropic,
+Google, xAI Grok, and DeepSeek models and were last reviewed 2026-10-22.
+Unknown models fall back
 to a conservative default. Override the table in code if prices drift.
 
 ## Development

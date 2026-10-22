@@ -25,6 +25,34 @@ def test_event_cost_unknown_model_falls_back():
     assert event.cost_usd() == pytest.approx(expected)
 
 
+def test_event_cost_grok_4():
+    event = UsageEvent("xai", "grok-4", 1000, 1000)
+    assert event.cost_usd() == pytest.approx(0.003 + 0.015)
+
+
+def test_event_cost_grok_4_1_fast():
+    event = UsageEvent("xai", "grok-4.1-fast", 1000, 1000)
+    assert event.cost_usd() == pytest.approx(0.0002 + 0.0005)
+
+
+def test_event_cost_deepseek_flash():
+    event = UsageEvent("deepseek", "deepseek-flash", 1000, 1000)
+    assert event.cost_usd() == pytest.approx(0.00015 + 0.0006)
+
+
+def test_event_cost_deepseek_v4_pro():
+    event = UsageEvent("deepseek", "deepseek-v4-pro", 1000, 1000)
+    assert event.cost_usd() == pytest.approx(0.00066 + 0.00198)
+
+
+def test_new_providers_appear_in_report():
+    tracker = UsageTracker()
+    tracker.record("xai", "grok-4", 500, 500)
+    tracker.record("deepseek", "deepseek-flash", 500, 500)
+    by_model = tracker.summary()["by_model"]
+    assert set(by_model) == {"xai/grok-4", "deepseek/deepseek-flash"}
+
+
 def test_total_tokens():
     event = UsageEvent("openai", "gpt-4o", 120, 80)
     assert event.total_tokens == 200

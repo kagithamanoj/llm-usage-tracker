@@ -3,7 +3,7 @@
 A small, dependency-free library. Record usage events as they happen,
 estimate cost from a built-in pricing table, and summarize or export
 for reporting. Prices are per 1K tokens in USD and were last reviewed
-2026-09-30; override them with your own table if they drift.
+2026-10-22; override them with your own table if they drift.
 """
 
 from __future__ import annotations
@@ -28,6 +28,16 @@ PRICING_PER_1K_USD = {
     "google": {
         "gemini-2.5-pro": (0.00125, 0.010),
         "gemini-2.5-flash": (0.0003, 0.0025),
+    },
+    "xai": {
+        "grok-4": (0.003, 0.015),
+        "grok-4.1-fast": (0.0002, 0.0005),
+    },
+    "deepseek": {
+        # DeepSeek runs off-peak pricing half the day; entries below use the
+        # off-peak rates, peak hours bill at double.
+        "deepseek-flash": (0.00015, 0.0006),
+        "deepseek-v4-pro": (0.00066, 0.00198),
     },
 }
 
