@@ -26,6 +26,7 @@ print(tracker.summary())
 ```bash
 llm-usage report usage.jsonl
 llm-usage report usage.jsonl --format json
+llm-usage report usage.jsonl --format csv
 llm-usage budget usage.jsonl --max 10.00
 llm-usage budget usage.jsonl --max 10.00 --warn-pct 75 --format json
 ```
@@ -37,6 +38,10 @@ so it works as a CI or cron guardrail for spending.
 `report` also prints a "Cost by day (UTC)" table that groups calls, tokens,
 and cost by the UTC date of each event, so you can see daily spend. The same
 breakdown is available in the JSON output under the `by_day` key.
+
+With `--format csv`, `report` emits a machine-readable CSV with columns
+`section,group,calls,tokens,cost_usd`: one row per model, one row per UTC
+day, and a final `total` row, ready to import into a spreadsheet.
 
 ## Pricing
 

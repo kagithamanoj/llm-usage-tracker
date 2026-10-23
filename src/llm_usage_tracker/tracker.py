@@ -8,6 +8,8 @@ for reporting. Prices are per 1K tokens in USD and were last reviewed
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import time
 from dataclasses import dataclass, field
@@ -153,6 +155,47 @@ def load_events(log_path: str) -> list[dict]:
             if line:
                 events.append(json.loads(line))
     return events
+
+
+def summary_to_csv(summary: dict) -> str:
+    """Render a summary() dict as CSV for spreadsheet import.
+
+    One row per model and one per UTC day, followed by an overall totals
+    row. Columns: section, group, calls, tokens, cost_usd.
+    """
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["section", "group", "calls", "tokens", "cost_usd"])
+    for model, bucket in sorted(summary.get("by_model", {}).items()):
+        writer.writerow(
+            [
+                "model",
+                model,
+                bucket["calls"],
+                bucket["tokens"],
+                f"{bucket['cost_usd']:.6f}",
+            ]
+        )
+    for day, bucket in sorted(summary.get("by_day", {}).items()):
+        writer.writerow(
+            [
+                "day",
+                day,
+                bucket["calls"],
+                bucket["tokens"],
+                f"{bucket['cost_usd']:.6f}",
+            ]
+        )
+    writer.writerow(
+        [
+            "total",
+            "all",
+            summary.get("calls", 0),
+            summary.get("total_tokens", 0),
+            f"{summary.get('total_cost_usd', 0.0):.6f}",
+        ]
+    )
+    return buf.getvalue()
 
 
 def budget_status(

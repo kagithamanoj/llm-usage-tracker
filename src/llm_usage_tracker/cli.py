@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 
-from .tracker import UsageTracker, budget_status, load_events
+from .tracker import UsageTracker, budget_status, load_events, summary_to_csv
 
 
 def _tracker_from_log(log_path: str) -> UsageTracker:
@@ -29,6 +29,9 @@ def cmd_report(args: argparse.Namespace) -> int:
     summary = tracker.summary()
     if args.format == "json":
         print(json.dumps(summary, indent=2))
+        return 0
+    if args.format == "csv":
+        print(summary_to_csv(summary), end="")
         return 0
     print(f"Calls:          {summary['calls']}")
     print(f"Total tokens:   {summary['total_tokens']:,}")
@@ -83,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("log", help="Path to the JSONL usage log.")
     report.add_argument(
         "--format",
-        choices=("text", "json"),
+        choices=("text", "json", "csv"),
         default="text",
         help="Output format.",
     )
