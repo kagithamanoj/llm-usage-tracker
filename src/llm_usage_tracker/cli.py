@@ -54,6 +54,51 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ranked_labels(summary: dict) -> list[tuple[str, dict]]:
+    """Labels sorted by cost descending, then label name for ties."""
+    return sorted(
+        summary.get("by_label", {}).items(),
+        key=lambda item: (-item[1]["cost_usd"], item[0]),
+    )
+
+
+def cmd_top_labels(args: argparse.Namespace) -> int:
+    if args.limit < 1:
+        print("error: --limit must be at least 1", file=sys.stderr)
+        return 1
+    tracker = _tracker_from_log(args.log)
+    summary = tracker.summary()
+    ranked = _ranked_labels(summary)[: args.limit]
+    if args.format == "json":
+        print(
+            json.dumps(
+                {
+                    "labels": [
+                        {
+                            "label": label,
+                            "calls": bucket["calls"],
+                            "tokens": bucket["tokens"],
+                            "cost_usd": bucket["cost_usd"],
+                        }
+                        for label, bucket in ranked
+                    ],
+                    "calls": summary["calls"],
+                    "total_cost_usd": summary["total_cost_usd"],
+                },
+                indent=2,
+            )
+        )
+        return 0
+    print("Cost by label:")
+    print(f"{'Label':<32}{'Calls':>8}{'Tokens':>12}{'Cost USD':>12}")
+    for label, bucket in ranked:
+        print(
+            f"{label:<32}{bucket['calls']:>8}{bucket['tokens']:>12}"
+            f"{bucket['cost_usd']:>12.4f}"
+        )
+    return 0
+
+
 def cmd_budget(args: argparse.Namespace) -> int:
     tracker = _tracker_from_log(args.log)
     total_cost = tracker.summary()["total_cost_usd"]
@@ -90,6 +135,22 @@ def main(argv: list[str] | None = None) -> int:
         default="text",
         help="Output format.",
     )
+    top_labels = sub.add_parser(
+        "top-labels", help="Show labels ranked by cost."
+    )
+    top_labels.add_argument("log", help="Path to the JSONL usage log.")
+    top_labels.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum number of labels to show (default 10).",
+    )
+    top_labels.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format.",
+    )
     budget = sub.add_parser(
         "budget", help="Warn when cumulative cost passes a threshold."
     )
@@ -115,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "report":
         return cmd_report(args)
+    if args.command == "top-labels":
+        return cmd_top_labels(args)
     if args.command == "budget":
         return cmd_budget(args)
     parser.print_help()

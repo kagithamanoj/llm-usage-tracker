@@ -27,6 +27,8 @@ print(tracker.summary())
 llm-usage report usage.jsonl
 llm-usage report usage.jsonl --format json
 llm-usage report usage.jsonl --format csv
+llm-usage top-labels usage.jsonl
+llm-usage top-labels usage.jsonl --limit 5 --format json
 llm-usage budget usage.jsonl --max 10.00
 llm-usage budget usage.jsonl --max 10.00 --warn-pct 75 --format json
 ```
@@ -42,6 +44,11 @@ breakdown is available in the JSON output under the `by_day` key.
 With `--format csv`, `report` emits a machine-readable CSV with columns
 `section,group,calls,tokens,cost_usd`: one row per model, one row per UTC
 day, and a final `total` row, ready to import into a spreadsheet.
+
+`top-labels` ranks labels by cost, highest first (default 10, change with
+`--limit`), so you can see which part of your app spends the most.
+Events recorded without a label are grouped under `(unlabeled)`. The same
+grouping is available in the JSON `report` output under the `by_label` key.
 
 ## Pricing
 

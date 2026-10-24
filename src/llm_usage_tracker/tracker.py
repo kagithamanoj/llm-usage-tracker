@@ -114,11 +114,12 @@ class UsageTracker:
         return event
 
     def summary(self) -> dict:
-        """Aggregate totals plus per-model and per-day (UTC) breakdowns."""
+        """Aggregate totals plus per-model, per-day (UTC), and per-label breakdowns."""
         total_tokens = sum(e.total_tokens for e in self.events)
         total_cost = sum(e.cost_usd() for e in self.events)
         by_model: dict[str, dict] = {}
         by_day: dict[str, dict] = {}
+        by_label: dict[str, dict] = {}
         for e in self.events:
             key = f"{e.provider}/{e.model}"
             bucket = by_model.setdefault(
@@ -138,12 +139,22 @@ class UsageTracker:
             day_bucket["calls"] += 1
             day_bucket["tokens"] += e.total_tokens
             day_bucket["cost_usd"] = round(day_bucket["cost_usd"] + e.cost_usd(), 6)
+            label_key = e.label if e.label else "(unlabeled)"
+            label_bucket = by_label.setdefault(
+                label_key, {"calls": 0, "tokens": 0, "cost_usd": 0.0}
+            )
+            label_bucket["calls"] += 1
+            label_bucket["tokens"] += e.total_tokens
+            label_bucket["cost_usd"] = round(
+                label_bucket["cost_usd"] + e.cost_usd(), 6
+            )
         return {
             "calls": len(self.events),
             "total_tokens": total_tokens,
             "total_cost_usd": round(total_cost, 6),
             "by_model": by_model,
             "by_day": by_day,
+            "by_label": by_label,
         }
 
 
