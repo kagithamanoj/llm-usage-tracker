@@ -21,6 +21,28 @@ tracker.record("openai", "gpt-4o-mini", prompt_tokens=1200, completion_tokens=30
 print(tracker.summary())
 ```
 
+Or wrap a call with `@tracked` so usage is recorded automatically:
+
+```python
+from llm_usage_tracker import UsageTracker, tracked
+
+tracker = UsageTracker(log_path="usage.jsonl")
+
+@tracked("openai", "gpt-4o-mini", tracker=tracker, label="summarizer")
+def summarize(text):
+    return "summary", 1200, 300
+
+summarize("some text")  # returns "summary", records one event
+```
+
+The wrapped function can return a `(result, prompt_tokens,
+completion_tokens)` tuple, a dict containing `prompt_tokens` and
+`completion_tokens`, or an object with a `usage` attribute in either
+shape (as real LLM SDK responses do). Tuple results return only the
+result to the caller; dict and object results are returned unchanged.
+With no `tracker` argument, a fresh tracker is created and exposed as
+`wrapped.tracker`. A call that raises records nothing.
+
 ## CLI
 
 ```bash

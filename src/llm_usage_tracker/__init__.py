@@ -6,6 +6,7 @@ from .tracker import (
     UsageTracker,
     load_events,
     summary_to_csv,
+    tracked,
 )
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "UsageTracker",
     "load_events",
     "summary_to_csv",
+    "tracked",
 ]
 
 __version__ = "0.1.0"

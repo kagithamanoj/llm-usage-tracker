@@ -9,6 +9,7 @@ for reporting. Prices are per 1K tokens in USD and were last reviewed
 from __future__ import annotations
 
 import csv
+import functools
 import io
 import json
 import time
@@ -156,6 +157,108 @@ class UsageTracker:
             "by_day": by_day,
             "by_label": by_label,
         }
+
+
+def _usage_from_value(value: object) -> tuple[int, int] | None:
+    """Pull (prompt_tokens, completion_tokens) out of a usage container.
+
+    Accepts a mapping with those keys, or an object with those
+    attributes. Returns None when neither shape is present.
+    """
+    if isinstance(value, dict):
+        if "prompt_tokens" in value and "completion_tokens" in value:
+            return value["prompt_tokens"], value["completion_tokens"]
+        return None
+    prompt = getattr(value, "prompt_tokens", None)
+    completion = getattr(value, "completion_tokens", None)
+    if prompt is not None and completion is not None:
+        return prompt, completion
+    return None
+
+
+def _extract_usage(result: object) -> tuple[object, int, int]:
+    """Split a wrapped function's return value into (result, prompt, completion).
+
+    Accepted return shapes:
+    - a 3-tuple (result, prompt_tokens, completion_tokens); only the
+      result is returned to the caller, the counts are recorded.
+    - a dict containing prompt_tokens and completion_tokens; returned
+      unchanged after recording.
+    - an object with a ``usage`` attribute holding either of the above;
+      returned unchanged after recording.
+    Anything else raises ValueError, so a mis-shaped return value is
+    never silently dropped from the log.
+    """
+    if isinstance(result, tuple) and len(result) == 3:
+        value, prompt_tokens, completion_tokens = result
+        return value, prompt_tokens, completion_tokens
+    if isinstance(result, dict):
+        usage = _usage_from_value(result)
+        if usage is not None:
+            return result, usage[0], usage[1]
+    usage_attr = getattr(result, "usage", None)
+    if usage_attr is not None:
+        usage = _usage_from_value(usage_attr)
+        if usage is not None:
+            return result, usage[0], usage[1]
+    usage = _usage_from_value(result)
+    if usage is not None:
+        return result, usage[0], usage[1]
+    raise ValueError(
+        "tracked function must return a (result, prompt_tokens, "
+        "completion_tokens) tuple, a dict with prompt_tokens and "
+        "completion_tokens, or an object with a usage attribute"
+    )
+
+
+def tracked(
+    provider: str,
+    model: str,
+    tracker: UsageTracker | None = None,
+    label: str = "",
+):
+    """Decorator that auto-records a wrapped call's token usage.
+
+    Example, with a shared tracker::
+
+        tracker = UsageTracker(log_path="usage.jsonl")
+
+        @tracked("openai", "gpt-4o-mini", tracker=tracker, label="summarizer")
+        def summarize(text):
+            return "summary", 1200, 300
+
+        summarize("some text")  # returns "summary", records one event
+
+    With no tracker argument, a fresh UsageTracker is created for the
+    decorated function and exposed as ``wrapped.tracker``, so the
+    caller can still read the summary. A call that raises records
+    nothing. See ``_extract_usage`` for the accepted return shapes.
+    """
+
+    def decorator(func):
+        target = tracker if tracker is not None else UsageTracker()
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            value, prompt_tokens, completion_tokens = _extract_usage(result)
+            if not isinstance(prompt_tokens, int) or not isinstance(
+                completion_tokens, int
+            ):
+                raise ValueError("token counts must be integers")
+            target.record(
+                provider,
+                model,
+                prompt_tokens,
+                completion_tokens,
+                label=label,
+            )
+            return value
+
+        wrapper.tracker = target
+        return wrapper
+
+    return decorator
 
 
 def load_events(log_path: str) -> list[dict]:
