@@ -4,6 +4,13 @@ A tiny, dependency-free Python library and CLI for tracking LLM token usage
 and cost across providers. Record usage events as your app makes calls, get
 cost estimates from a built-in pricing table, and summarize a JSONL log.
 
+## Screenshot
+
+![llm-usage report output](docs/screenshot.png)
+
+The `report` command on a sample log: totals, cost by model, and cost
+by day in UTC.
+
 ## Install
 
 ```bash
